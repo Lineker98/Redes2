@@ -9,13 +9,15 @@ class UDPClient:
         self.client = None
 
     def init_server(self) -> None:
-        """_summary_
+        """
+        Method to start the UDP client server and send the first request to the server
         """
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.client.sendto("REQUEST".encode(), (self.host, self.port))
 
     def receive_data(self) -> None:
-        """_summary_
+        """
+        Main method to receive the server response and write the file
         """
 
         with open(self.file_name, "wb") as file:

@@ -13,10 +13,11 @@ class UDPServer(object):
         self.server = None
 
     def read_file(self) -> List:
-        """_summary_
+        """
+        Method to read the file requested by the client.
 
         Returns:
-            List: _description_
+            List: A list with the chunks of 1024 size.
         """
         file_chunks = []
         with open(self.file_name, "rb") as file:
@@ -30,14 +31,16 @@ class UDPServer(object):
         return file_chunks
     
     def init_server(self) -> None:
-        """_summary_
+        """
+        Method to init the UDP server and bind in the port and host
         """
         self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server.bind((self.host, self.port))
         print(f"Server started on {self.host}:{self.port}")
 
     def process_requisition(self):
-        """_summary_
+        """
+        Main method to send the file chunks to the client.
         """
 
         chunks = self.read_file()
