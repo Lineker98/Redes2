@@ -20,7 +20,7 @@ class UDPClient:
         Main method to receive the server response and write the file
         """
 
-        with open(self.file_name, "wb") as file:
+        with open(self.file_path, "wb") as file:
             while True:
                 data, addr = self.client.recvfrom(1024)
                 if data.decode() == "EOF":
@@ -29,3 +29,8 @@ class UDPClient:
                 file.write(data)
                 self.client.sendto("ACK".encode(), addr)
                 print(f"Chunk {data.decode()} received from {addr[0]}:{addr[1]}")
+
+if __name__ == "__main__":
+    udp_client = UDPClient("127.0.0.1", 8080, window_size=16, file_path="receive.txt")
+    udp_client.init_server()
+    udp_client.receive_data()

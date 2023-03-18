@@ -1,0 +1,12 @@
+1 - Status progress file 
+2 - Prompt command system
+3 - Implement password system
+4 - Client send file
+####
+5 - Add Header with checksum and sequence number
+    - Sequence number: verify with the last one received:
+        if last number + 1 == to seq number received -> OK
+
+        else: Store the packet received and ask for the packet lost
+6 - Ask to resed the files if check sum is wrong
+7 - Implement Timeout

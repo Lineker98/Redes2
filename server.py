@@ -27,7 +27,7 @@ class UDPServer(object):
                     break
                 file_chunks.append(chunk)
 
-        print(f"File '{self.file_name}' of size {self.file_size} bytes loaded into memory in {len(self.file_chunks)} chunks")
+        print(f"File '{self.file_name}' of size {self.file_size} bytes loaded into memory in {len(file_chunks)} chunks")
         return file_chunks
     
     def init_server(self) -> None:
@@ -47,7 +47,7 @@ class UDPServer(object):
         while True:
             data, addr = self.server.recvfrom(1024)
             if data.decode() == "REQUEST":
-                for i in range(0, len(self.file_chunks), self.window_size):
+                for i in range(0, len(chunks), self.window_size):
                     chunk_window = chunks[i:i+self.window_size]
                     for chunk in chunk_window:
                         self.server.sendto(chunk, addr)
@@ -57,3 +57,8 @@ class UDPServer(object):
                         self.server.sendto("EOF".encode(), addr)
                         print("File transferred")
                         break
+
+if __name__ == "__main__":
+    udp_server = UDPServer("127.0.0.1", 8080, window_size=16, file_name="teste.txt")
+    udp_server.init_server()
+    udp_server.process_requisition()
