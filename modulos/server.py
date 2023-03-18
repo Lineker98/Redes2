@@ -28,8 +28,6 @@ class UDPServer(object):
                if not chunk:
                   break
                file_chunks.append(chunk)
-
-      print(f"File '{file_name}' of size {file_size} bytes loaded into memory in {len(file_chunks)} chunks")
       return file_chunks
    
    def init_server(self) -> None:
@@ -48,22 +46,40 @@ class UDPServer(object):
 
       while True:
          data, addr = self.server.recvfrom(1024)
-         if "REQUEST" in data.decode():
-               file_name = 'files/' + data.decode().split(':')[-1]
-               chunks = self.read_file(file_name)
-   
-               for i in range(0, len(chunks), self.window_size):
-                  chunk_window = chunks[i:i+self.window_size]
-                  for chunk in chunk_window:
-                     self.server.sendto(chunk, addr)
 
-                  if i+self.window_size >= len(chunks):
-                     self.server.sendto("EOF".encode(), addr)
-                     print("File transferred")
-                     break
+         if "REQUEST" in data.decode():
+            self.send_file(data,addr)
+         
          elif data.decode() == "LIST":
             self.list_files(addr)
+         
+         elif 'STORE' in data.decode():
+            file_name = 'files/' + data.decode().split(':')[-1]
+            with open(file_name, "wb") as file:
+               while True:
+                  self.server.sendto(f"REQUEST:{file_name}".encode(), addr)
+                  data, addr = self.server.recvfrom(1024)
+                  if data.decode() == "EOF":
+                     print("File received!")
+                     break
+                  file.write(data)
+                  self.server.sendto("ACK".encode(), addr)
+                  print(f"Chunk {data.decode()} received from {addr[0]}:{addr[1]}")
    
+   def send_file(self, data, addr):
+      file_name = 'files/' + data.decode().split(':')[-1]
+      chunks = self.read_file(file_name)
+
+      for i in range(0, len(chunks), self.window_size):
+         chunk_window = chunks[i:i+self.window_size]
+         for chunk in chunk_window:
+            self.server.sendto(chunk, addr)
+
+         if i+self.window_size >= len(chunks):
+            self.server.sendto("EOF".encode(), addr)
+            print("File transferred")
+            break
+
    def list_files(self, addr):
       files = os.listdir('files')
       message = '\n'.join(files)
