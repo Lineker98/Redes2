@@ -2,6 +2,7 @@ import socket
 import os
 from typing import List
 import zlib
+import struct
 
 class UDPServer(object):
 
@@ -13,7 +14,7 @@ class UDPServer(object):
       self.max_payload_size = 1024
       self.server = None
 
-   def check_sum_calculator(data:bytes) -> int:
+   def check_sum_calculator(self, data: bytes) -> int:
       """_summary_
 
       Args:
@@ -24,6 +25,20 @@ class UDPServer(object):
       """
       checksum = zlib.crc32(data)
       return checksum
+   
+   def make_udp_header(self, data: bytes, dest_addr: str) -> bytes:
+      """_summary_
+
+      Args:
+          data (_type_): _description_
+
+      Returns:
+          bytes: _description_
+      """
+      data_length = len(data)
+      checksum = self.check_sum_calculator(data=data)
+      udp_header = struct.pack("!IIII", self.port, dest_addr, data_length, checksum)
+      return udp_header
 
    def read_file(self, file_name) -> List:
       """
@@ -84,11 +99,15 @@ class UDPServer(object):
       for i in range(0, len(chunks), self.window_size):
          chunk_window = chunks[i:i+self.window_size]
          for chunk in chunk_window:
-            print(chunk.decode())
-            self.server.sendto(chunk, addr)
+            udp_header = self.make_udp_header(data=chunk, dest_addr=addr[1])
+            full_packet = udp_header + chunk
+            self.server.sendto(full_packet, addr)
 
          if i+self.window_size >= len(chunks):
-            self.server.sendto("EOF".encode(), addr)
+            end_of_file = "EOF"
+            udp_header = self.make_udp_header(data=end_of_file.encode(), dest_addr=addr[1])
+            full_packet = udp_header + end_of_file.encode()
+            self.server.sendto(full_packet, addr)
             print("File transferred")
             break
 
