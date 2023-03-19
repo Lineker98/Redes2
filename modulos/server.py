@@ -9,7 +9,6 @@ class UDPServer(object):
       self.port = port
       self.window_size = window_size
       self.file_name = file_name
-      self.file_size = os.stat(file_name).st_size
       self.server = None
 
    def read_file(self, file_name) -> List:
@@ -20,7 +19,6 @@ class UDPServer(object):
          List: A list with the chunks of 1024 size.
       """
       file_chunks = []
-      file_size = os.stat(file_name).st_size
 
       with open(file_name, "rb") as file:
          while True:
@@ -67,7 +65,7 @@ class UDPServer(object):
                   print(f"Chunk {data.decode()} received from {addr[0]}:{addr[1]}")
    
    def send_file(self, data, addr):
-      file_name = 'files/' + data.decode().split(':')[-1]
+      file_name = os.path.join("files", data.decode().split(':')[-1])
       chunks = self.read_file(file_name)
 
       for i in range(0, len(chunks), self.window_size):
@@ -94,6 +92,6 @@ class UDPServer(object):
       self.server.sendto(data, addr)
             
 if __name__ == "__main__":
-    udp_server = UDPServer("127.0.0.1", 8080, window_size=16, file_name="teste.txt")
+    udp_server = UDPServer("127.0.0.1", 8080, window_size=2, file_name="teste.txt")
     udp_server.init_server()
     udp_server.process_requisition()

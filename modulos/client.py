@@ -52,9 +52,9 @@ class UDPClient:
       """
       
       file_name = input("Entre com o nome do arquivo")
+      self.client.sendto(f"REQUEST:{file_name}".encode(), (self.host, self.port))
       with open(self.file_path, "wb") as file:
          while True:
-               self.client.sendto(f"REQUEST:{file_name}".encode(), (self.host, self.port))
                data, addr = self.client.recvfrom(1024)
                if data.decode() == "EOF":
                   print("File received!")
