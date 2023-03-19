@@ -16,6 +16,10 @@ if __name__ == "__main__":
          udp_server.list_files(addr)
       
       elif 'STORE' in data.decode():
-         file_path = 'files/' + data.decode().split(':')[-1]
-         udp_server.server.sendto(f"STORE:{file_path}".encode(), addr)
-         udp_server.store_file(file_path, addr)
+         file_list = data.decode().split('*')
+         password = file_list[-1]
+         file_path = 'files/' + file_list[0].split(':')[-1]
+
+         data.decode().split('*')[-1]
+         if udp_server.password == password:
+            udp_server.store_file(file_path, addr)

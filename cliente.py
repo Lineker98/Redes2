@@ -32,6 +32,11 @@ if __name__ == "__main__":
 
       elif choice == '3':
          file_name = input("Entre com o nome do arquivo: ")
+         password = input("Entre com a senha do servidor: ")
+         udp_server.server.sendto(
+            f"STORE:{file_name}*{password}".encode(), 
+            (udp_server.host, udp_server.port)
+         )
          udp_server.send_file(file_name,(udp_server.host, udp_server.port))
 
       else:

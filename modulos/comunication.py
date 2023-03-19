@@ -14,6 +14,8 @@ class UDPServer(object):
       self.port = port
       self.window_size = window_size
 
+      self.password = ''
+
       self.max_payload_size = 1024
       self.server = None
 
@@ -50,6 +52,9 @@ class UDPServer(object):
       self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
       if bind:
          self.server.bind((self.host, self.port))
+         letters = string.ascii_lowercase
+         self.password = ''.join(random.choice(letters) for i in range(8))
+         print(self.password)
       print(f"Server started on {self.host}:{self.port}")
    
    def read_file(self, file_name) -> List:
