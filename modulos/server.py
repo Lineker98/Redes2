@@ -9,6 +9,7 @@ class UDPServer(object):
       self.port = port
       self.window_size = window_size
       self.file_name = file_name
+      self.max_payload_size = 1024
       self.server = None
 
    def read_file(self, file_name) -> List:
@@ -22,7 +23,7 @@ class UDPServer(object):
 
       with open(file_name, "rb") as file:
          while True:
-               chunk = file.read(1024)
+               chunk = file.read(self.max_payload_size)
                if not chunk:
                   break
                file_chunks.append(chunk)
@@ -67,10 +68,10 @@ class UDPServer(object):
    def send_file(self, data, addr):
       file_name = os.path.join("files", data.decode().split(':')[-1])
       chunks = self.read_file(file_name)
-
       for i in range(0, len(chunks), self.window_size):
          chunk_window = chunks[i:i+self.window_size]
          for chunk in chunk_window:
+            print(chunk.decode())
             self.server.sendto(chunk, addr)
 
          if i+self.window_size >= len(chunks):
