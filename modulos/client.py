@@ -1,5 +1,8 @@
 import socket
 import os
+from typing import Tuple
+import struct
+import zlib
 
 class UDPClient:
    def __init__(self, host: str, port: int, window_size: int, file_path: str) -> None:
@@ -14,6 +17,34 @@ class UDPClient:
       Method to start the UDP client server and send the first request to the server
       """
       self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+   def get_udp_header(self, data: bytes) -> Tuple[int, bytes]:
+      """_summary_
+
+      Args:
+          data (bytes): _description_
+
+      Returns:
+          Tuple[int, bytes]: _description_
+      """
+      udp_header = data[:16]
+      payload = data[16:]
+      udp_header = struct.unpack("!IIII", udp_header)
+      corret_checksum = udp_header[3]
+      return (corret_checksum, payload)
+   
+   def check_sum_calculator(self, data: bytes) -> int:
+      """_summary_
+
+      Args:
+          data (bytes): _description_
+
+      Returns:
+          int: _description_
+      """
+      checksum = zlib.crc32(data)
+      return checksum
+
 
    def list_file(self):
       message = 'LIST'
@@ -52,16 +83,22 @@ class UDPClient:
       """
       
       file_name = input("Entre com o nome do arquivo")
+      self.client.sendto(f"REQUEST:{file_name}".encode(), (self.host, self.port))
       with open(self.file_path, "wb") as file:
          while True:
-               self.client.sendto(f"REQUEST:{file_name}".encode(), (self.host, self.port))
                data, addr = self.client.recvfrom(1024)
-               if data.decode() == "EOF":
+               corret_checksum, payload = self.get_udp_header(data=data)
+               if payload.decode() == "EOF":
                   print("File received!")
                   break
-               file.write(data)
+               checksum = self.check_sum_calculator(payload)
+               if checksum != corret_checksum:
+                  print(f"checksum: {checksum}, correct checksum: {corret_checksum}")
+                  print("DATA CORRUPTED")
+
+               file.write(payload)
                self.client.sendto("ACK".encode(), addr)
-               print(f"Chunk {data.decode()} received from {addr[0]}:{addr[1]}")
+               #print(f"Chunk {payload.decode()} received from {addr[0]}:{addr[1]}")
 
    def send_file(self):
       file_path = input("Entre com o nome do arquivo")
