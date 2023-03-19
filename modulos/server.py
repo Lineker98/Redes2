@@ -1,6 +1,7 @@
 import socket
 import os
 from typing import List
+import zlib
 
 class UDPServer(object):
 
@@ -11,6 +12,18 @@ class UDPServer(object):
       self.file_name = file_name
       self.max_payload_size = 1024
       self.server = None
+
+   def check_sum_calculator(data:bytes) -> int:
+      """_summary_
+
+      Args:
+          data (bytes): _description_
+
+      Returns:
+          int: _description_
+      """
+      checksum = zlib.crc32(data)
+      return checksum
 
    def read_file(self, file_name) -> List:
       """
