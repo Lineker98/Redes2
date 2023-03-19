@@ -2,16 +2,25 @@ import socket
 import os
 from typing import List
 
+import random
+import string
+
 class UDPServer(object):
 
-   def __init__(self, host: str, port: int, window_size: int, file_name: str) -> None:
+   def __init__(self, host: str, port: int, window_size: int) -> None:
       self.host = host
       self.port = port
       self.window_size = window_size
-      self.file_name = file_name
-      self.file_size = os.stat(file_name).st_size
+      self.password = self.random_word(8)
+      
       self.server = None
 
+      print("Senha = " + self.password)
+
+   def random_word(length):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))
+   
    def read_file(self, file_name) -> List:
       """
       Method to read the file requested by the client.
