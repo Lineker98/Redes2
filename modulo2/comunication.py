@@ -2,8 +2,7 @@ import socket
 import os
 from typing import List
 import zlib
-import struct
-
+from typing import Tuple
 import random
 import string
 
@@ -60,6 +59,38 @@ class UDPServer(object):
       checksum = zlib.crc32(data)
       return checksum
    
+   def make_header(self, num_seq, checksum) -> bytes:
+      """_summary_
+
+      Args:
+          num_seq (_type_): _description_
+          checksum (_type_): _description_
+
+      Returns:
+          Tuple[bytes, bytes]: _description_
+      """
+      if type(num_seq) is not bytes:
+         num_seq = num_seq.to_bytes(4, byteorder='big')
+      if type(checksum) is not bytes:
+         checksum = checksum.to_bytes(4, byteorder='big')
+      
+      return num_seq + checksum
+   
+   def unpack_packate(self, packet: bytes) -> Tuple[int, int, bytes]:
+      """_summary_
+
+      Args:
+          packate (bytes): _description_
+
+      Returns:
+          Tuple[int, int, bytes]: _description_
+      """
+      num_seq = int.from_bytes(packet[:4], byteorder='big')
+      checksum = int.from_bytes(packet[4:8], byteorder='big')
+      data = packet[8:]
+      return (num_seq, checksum, data)
+
+   
    def send_packet(self, packet, address):
       self.server.sendto(packet, address)
 
@@ -69,7 +100,6 @@ class UDPServer(object):
 
    def send_file(self, file_path, addr):
       data_packets = self.read_file(file_path)
-      print(data_packets)
       BASE = 0
       
       while BASE < len(data_packets) -1: 
@@ -77,20 +107,24 @@ class UDPServer(object):
          chunk_window = data_packets[BASE:BASE+self.window_size]
 
          for i, data in enumerate(chunk_window):
-            seq_num_bytes = (BASE + i).to_bytes(4, byteorder='big')
-            packet = seq_num_bytes + data
+            num_seq = (BASE + i)
+            checksum = self.checksum_calculator(data)
+            header = self.make_header(num_seq, checksum)
+            packet = header + data
             self.send_packet(packet, addr)
 
          packet, address = self.receive_packet()
          ack = int.from_bytes(packet[:4], byteorder='big')
-         data = packet[4:]
+         data = packet[5:]
          BASE = ack
       
-      seq_num_bytes = BASE.to_bytes(4, byteorder='big')
-      end_of_file = "EOF"
-      full_packet = seq_num_bytes + end_of_file.encode()
+      num_seq = BASE
+      data = "EOF".encode()
+      checksum = self.checksum_calculator(data)
+      header = self.make_header(num_seq, checksum)
+      packet = header + data
 
-      self.server.sendto(full_packet, addr)
+      self.server.sendto(packet, addr)
 
    def store_file(self, file_path, addr):   
       BASE = 0
@@ -99,16 +133,15 @@ class UDPServer(object):
       while True:
          packet, address = self.receive_packet()
 
-         seq_num = int.from_bytes(packet[:4], byteorder='big')
-         data = packet[4:]
+         num_seq, checksum, data = self.unpack_packate(packet)
 
          if data.decode() == "EOF":
             print("File received!")
             break
 
-         buffer[seq_num] = data
+         buffer[num_seq] = data
 
-         if seq_num == BASE:
+         if num_seq == BASE:
             ack_packet = BASE.to_bytes(4, byteorder='big')
             self.send_packet(ack_packet, address)
             
