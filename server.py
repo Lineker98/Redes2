@@ -22,4 +22,7 @@ if __name__ == "__main__":
 
          data.decode().split('*')[-1]
          if udp_server.password == password:
+            udp_server.send_packet("ACK".encode(), addr)
             udp_server.store_file(file_path, addr)
+         else:
+            udp_server.send_packet("ERROR".encode(), addr)

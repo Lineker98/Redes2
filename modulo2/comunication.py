@@ -48,26 +48,30 @@ class UDPServer(object):
       return file_chunks
    
    def checksum_calculator(self, data: bytes) -> int:
-      """_summary_
+      """
+      Método para realzação do cáculo do checksum.
 
       Args:
-          data (bytes): _description_
+          data (bytes): Dados, ou payload, sob os quais o checksum será calculado.
 
       Returns:
-          int: _description_
+          int: checksum.
       """
       checksum = zlib.crc32(data)
       return checksum
    
-   def make_header(self, num_seq, checksum) -> bytes:
-      """_summary_
+   def make_header(self, num_seq: int, checksum: int) -> bytes:
+      """
+      Método para estruturação do cabeçalho utilizado. Será construído de 
+      forma que os 4 primeiros bytes são para o número de sequência
+      e os 4 bytes porteriores são para o checksum.
 
       Args:
-          num_seq (_type_): _description_
-          checksum (_type_): _description_
+          num_seq (int): Número de sequência do pacote que será enviado.
+          checksum (int): Valor do checksum
 
       Returns:
-          Tuple[bytes, bytes]: _description_
+          bytes: Bytes com os valores do numéro de sequência, seguido pelo checksum
       """
       if type(num_seq) is not bytes:
          num_seq = num_seq.to_bytes(4, byteorder='big')
@@ -76,14 +80,16 @@ class UDPServer(object):
       
       return num_seq + checksum
    
-   def unpack_packate(self, packet: bytes) -> Tuple[int, int, bytes]:
-      """_summary_
+   def unpack_packet(self, packet: bytes) -> Tuple[int, int, bytes]:
+      """
+      Método para desempacotamento do pacote de dados.
 
       Args:
-          packate (bytes): _description_
+          packet (bytes): Pacote de dados recebido da janela deslizante.
 
       Returns:
-          Tuple[int, int, bytes]: _description_
+          Tuple[int, int, bytes]: Tupla com os valores de número de sequência, checksum
+          e o payload 
       """
       num_seq = int.from_bytes(packet[:4], byteorder='big')
       checksum = int.from_bytes(packet[4:8], byteorder='big')
@@ -98,14 +104,22 @@ class UDPServer(object):
       packet, address = self.server.recvfrom(self.max_payload_size)
       return packet, address
 
-   def send_file(self, file_path, addr):
+   def send_file(self, file_path: str, addr):
+      """
+      Método genérico para envio de arquivos, este método pode ser utilizando tanto pelo
+      lado do servidor, quanto pelo lado do cliente.
+
+      Args:
+          file_path (str): Caminho de dstino para leitura do arquivo que será enviado.
+          addr (_type_): _description_
+      """
       data_packets = self.read_file(file_path)
       BASE = 0
       
       while BASE < len(data_packets) -1: 
             
          chunk_window = data_packets[BASE:BASE+self.window_size]
-
+         
          for i, data in enumerate(chunk_window):
             num_seq = (BASE + i)
             checksum = self.checksum_calculator(data)
@@ -114,26 +128,32 @@ class UDPServer(object):
             self.send_packet(packet, addr)
 
          packet, address = self.receive_packet()
-         ack = int.from_bytes(packet[:4], byteorder='big')
-         data = packet[5:]
-         BASE = ack
-      
-      num_seq = BASE
+         num_seq, checksum, data = self.unpack_packet(packet)
+         BASE = num_seq
+
       data = "EOF".encode()
       checksum = self.checksum_calculator(data)
-      header = self.make_header(num_seq, checksum)
+      header = self.make_header(0, checksum)
       packet = header + data
 
       self.server.sendto(packet, addr)
+      print("File Sent !!")
 
-   def store_file(self, file_path, addr):   
+   def store_file(self, file_path: str, addr):   
+      """
+      Método genérico para recebimento de arquivos, tanto pelo lado do servidor,
+      quanto do lado do cliente.
+
+      Args:
+          file_path (str): Caminho para onde será salvo o arquivo
+          addr (_type_): _description_
+      """
       BASE = 0
       buffer = {}
       
       while True:
          packet, address = self.receive_packet()
-
-         num_seq, checksum, data = self.unpack_packate(packet)
+         num_seq, true_checksum, data = self.unpack_packet(packet)
 
          if data.decode() == "EOF":
             print("File received!")
@@ -142,23 +162,29 @@ class UDPServer(object):
          buffer[num_seq] = data
 
          if num_seq == BASE:
+            checksum = self.checksum_calculator(data)
             ack_packet = BASE.to_bytes(4, byteorder='big')
             self.send_packet(ack_packet, address)
+            BASE += 1   
             
-            BASE += 1
-         
          elif BASE > 0:
             ack_packet = (BASE-1).to_bytes(4, byteorder='big')
             self.send_packet(ack_packet, address)
                   
-         
       with open(file_path, "wb") as f:
-         print(buffer)     
          buffer = dict(sorted(buffer.items()))
          buffer = list(buffer.values())
          f.writelines(buffer)
 
+      checksum = checksum
+
    def list_files(self, addr):
+      """
+      Método para listagem de todos os arquivos txt.
+
+      Args:
+          addr (_type_): _description_
+      """
       files = os.listdir('files')
       message = '\n'.join(files)
       self.server.sendto(message.encode(), addr)

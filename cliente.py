@@ -38,7 +38,13 @@ if __name__ == "__main__":
             (udp_server.host, udp_server.port)
          )
          
-         udp_server.send_file(file_name,(udp_server.host, udp_server.port))
+         packet, address = udp_server.receive_packet()
+
+         while packet.decode() != "ERROR" and packet.decode() != "ACK":
+            packet, address = udp_server.receive_packet()
+         
+         if packet.decode() == "ACK":
+            udp_server.send_file(file_name,(udp_server.host, udp_server.port))
 
       else:
          print("opção inválida, tente novamente")
