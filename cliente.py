@@ -2,7 +2,7 @@ from modulo2.comunication import UDPServer
 import os
 
 if __name__ == "__main__":
-   udp_server = UDPServer("127.0.0.1", 8080, window_size=16)
+   udp_server = UDPServer("127.0.0.1", 8080, window_size=2)
    udp_server.init_server()
 
    while True:
