@@ -48,6 +48,18 @@ class UDPServer(object):
                file_chunks.append(chunk)
       return file_chunks
    
+   def checksum_calculator(self, data: bytes) -> int:
+      """_summary_
+
+      Args:
+          data (bytes): _description_
+
+      Returns:
+          int: _description_
+      """
+      checksum = zlib.crc32(data)
+      return checksum
+   
    def send_packet(self, packet, address):
       self.server.sendto(packet, address)
 
@@ -72,9 +84,6 @@ class UDPServer(object):
          packet, address = self.receive_packet()
          ack = int.from_bytes(packet[:4], byteorder='big')
          data = packet[4:]
-
-         print(BASE)
-         print(len(data_packets))
          BASE = ack
       
       seq_num_bytes = BASE.to_bytes(4, byteorder='big')
@@ -108,9 +117,7 @@ class UDPServer(object):
          elif BASE > 0:
             ack_packet = (BASE-1).to_bytes(4, byteorder='big')
             self.send_packet(ack_packet, address)
-         
-         print(BASE)
-         
+                  
          
       with open(file_path, "wb") as f:
          print(buffer)     
