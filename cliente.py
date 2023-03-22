@@ -1,4 +1,4 @@
-from modulos.comunication import UDPServer
+from modulo2.comunication import UDPServer
 import os
 
 if __name__ == "__main__":
@@ -18,25 +18,26 @@ if __name__ == "__main__":
             message.encode(),
             (udp_server.host, udp_server.port)
          )
-         while True:
-            data, addr = udp_server.server.recvfrom(1024)
-            if data.decode() == "ACK":
-               print("List received!")
-               break
-            print(data.decode())
-            udp_server.server.sendto("ACK".encode(), addr)
-      
+         
+         data, addr = udp_server.server.recvfrom(1024)
+         print(data.decode())
+         
       elif choice == '2':
          file_name = input("Entre com o nome do arquivo: ")
-         udp_server.store_file(file_name, (udp_server.host, udp_server.port))
+         addr = (udp_server.host, udp_server.port)
+
+         udp_server.server.sendto(f"REQUEST:{file_name}".encode(), addr)
+         udp_server.store_file(file_name, addr)
 
       elif choice == '3':
          file_name = input("Entre com o nome do arquivo: ")
          password = input("Entre com a senha do servidor: ")
+
          udp_server.server.sendto(
             f"STORE:{file_name}*{password}".encode(), 
             (udp_server.host, udp_server.port)
          )
+         
          udp_server.send_file(file_name,(udp_server.host, udp_server.port))
 
       else:

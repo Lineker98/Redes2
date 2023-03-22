@@ -1,4 +1,4 @@
-from modulos.comunication import UDPServer
+from modulo2.comunication import UDPServer
 import os
 
 if __name__ == "__main__":
