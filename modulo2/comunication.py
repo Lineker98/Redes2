@@ -176,8 +176,6 @@ class UDPServer(object):
          buffer = list(buffer.values())
          f.writelines(buffer)
 
-      checksum = checksum
-
    def list_files(self, addr):
       """
       Método para listagem de todos os arquivos txt.
