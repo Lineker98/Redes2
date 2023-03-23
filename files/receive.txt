@@ -1,0 +1,20 @@
+Here, Receiver is a class that represents the receiving end of a TCP connection. 
+It takes a window_size argument, which is the maximum number of unacknowledged packets that 
+the sender can have in flight at any given time.
+
+The receive method is called whenever a new packet is received. It takes two arguments: 
+data, which is the payload of the packet, and seq_num, which is the sequence number of the packet.
+
+The receive method adds the packet to a buffer and sorts the buffer by sequence number. 
+It then checks if it can move the window forward by delivering any data to the application 
+layer that has been received in order. It does this by checking the sequence number of the first 
+packet in the buffer. If it is equal to the expected sequence number (next_seq_num), the data is 
+delivered to the application layer, the packet is removed from the buffer, and the window is moved 
+forward. This process is repeated until the first packet in the buffer has a sequence number that is 
+not equal to next_seq_num.
+, if the window size is a multiple of window_size, the receiver can increase the window size by 
+doubling it.
+
+Note that this is a simplified implementation of the sliding window algorithm, and it may not be suitable 
+for all use cases. It also assumes that packets are received in order, which may not always be the case 
+in practice.
