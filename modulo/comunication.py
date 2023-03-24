@@ -159,9 +159,8 @@ class UDPServer(object):
             print("File received!")
             break
 
-         buffer[num_seq] = data
-
          if num_seq == BASE:
+            buffer[num_seq] = data
             checksum = self.checksum_calculator(data)
             ack_packet = BASE.to_bytes(4, byteorder='big')
             self.send_packet(ack_packet, address)

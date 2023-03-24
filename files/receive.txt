@@ -11,8 +11,7 @@ layer that has been received in order. It does this by checking the sequence num
 packet in the buffer. If it is equal to the expected sequence number (next_seq_num), the data is 
 delivered to the application layer, the packet is removed from the buffer, and the window is moved 
 forward. This process is repeated until the first packet in the buffer has a sequence number that is 
-not equal to next_seq_num.
-, if the window size is a multiple of window_size, the receiver can increase the window size by 
+not equal to next_seq_ndow size is a multiple of window_size, the receiver can increase the window size by 
 doubling it.
 
 Note that this is a simplified implementation of the sliding window algorithm, and it may not be suitable 
